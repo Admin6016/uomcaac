@@ -5,10 +5,11 @@ export default {
 
     if (path === "/favicon.ico") return new Response("", { status: 204 });
 
-    // 静态资源: /data/:id.jpg
-    const imgMatch = path.match(/^\/data\/(\d+)\.jpg$/);
-    if (imgMatch && env.ASSETS) {
-      return env.ASSETS.fetch(request);
+    // 静态资源: /data/:id.jpg -> ASSETS binding（目录是 ./data，路径要去掉 /data/ 前缀）
+    if (path.match(/^\/data\/\d+\.jpg$/) && env.ASSETS) {
+      const assetPath = "/" + path.replace(/^\/data\//, ""); // /1.jpg
+      const assetReq = new Request(new URL(assetPath, url.origin), request);
+      return env.ASSETS.fetch(assetReq);
     }
 
     // 路由解析
