@@ -13,7 +13,6 @@ async function handleRequest(request) {
   const path = url.pathname;
   if (path === "/favicon.ico") return new Response("", { status: 204 });
 
-  // /data/:id.jpg
   const imgMatch = path.match(/^\/data\/(\d+)\.jpg$/);
   if (imgMatch) {
     const b64 = CERT_IMAGES[imgMatch[1]];
@@ -23,7 +22,6 @@ async function handleRequest(request) {
     });
   }
 
-  // 路由
   let certId = "1";
   const showMatch = path.match(/^\/uav-sczs-show\/(.+)$/);
   if (showMatch) certId = showMatch[1].replace(/[^a-zA-Z0-9_-]/g, "") || "1";
@@ -41,17 +39,18 @@ async function handleRequest(request) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${cert.title} - UOM CAAC</title>
+<title id="portal-title"></title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;color:#424242}
+html,body{height:100%}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;color:#424242;overflow:hidden}
 
-/* 页面占满视口，禁止整体滚动 */
-#app{width:100%;height:100%;overflow:hidden auto}
+#app{width:100%;height:100%;overflow:hidden}
+
 .register-page{
-  position:absolute;
-  top:0;bottom:0;left:0;right:0;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
   overflow:hidden;
 }
 
@@ -59,9 +58,11 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
 .register-header{
   background:rgb(2,92,192);
   height:56px;
+  min-height:56px;
   padding:0 16px;
   display:flex;
   align-items:center;
+  flex-shrink:0;
 }
 .register-header img{
   height:42px;
@@ -70,9 +71,11 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
   object-position:left center;
 }
 
-/* 中间内容区：填满 header 和 footer 之间，自身可滚动 */
+/* 中间内容：填满剩余空间，自身可滚动 */
 .register-container{
+  flex:1;
   overflow-y:auto;
+  overflow-x:hidden;
   padding:20px 0 20px;
   display:flex;
   flex-direction:column;
@@ -107,6 +110,7 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
   font-size:14px;
   padding:0 0 0 10px;
   height:30px;
+  min-height:30px;
   display:flex;
   align-items:center;
   text-align:left;
