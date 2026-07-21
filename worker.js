@@ -11,7 +11,7 @@ export default {
       return env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), request));
     }
 
-    // 路由解析
+    // 路由解析：提取证书 ID
     let certId = "1";
     const showMatch = path.match(/^\/uav-sczs-show\/(.+)$/);
     if (showMatch) {
@@ -20,12 +20,14 @@ export default {
       certId = path.match(/^\/(\d+)$/)[1];
     }
 
+    // 元数据（仅用于标题/状态，不影响图片路径）
     const CERTS = {
       "1": { status: "已启用", title: "运营合格证" },
     };
-    if (!CERTS[certId]) certId = "1";
-    const cert = CERTS[certId];
+    const cert = CERTS[certId] || { status: "已启用", title: "运营合格证" };
 
+    // 第一张：/data/{certId}.jpg（按路径直接取，CERTS 白名单无关）
+    // 第二张：/data/back.jpg（固定背页）
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
