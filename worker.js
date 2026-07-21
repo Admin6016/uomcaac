@@ -5,8 +5,8 @@ export default {
 
     if (path === "/favicon.ico") return new Response("", { status: 204 });
 
-    // 静态资源: /data/:id.jpg
-    if (path.match(/^\/data\/\d+\.jpg$/) && env.ASSETS) {
+    // 静态资源: /data/xxx.jpg
+    if (path.match(/^\/data\/.+\.jpg$/) && env.ASSETS) {
       const assetPath = "/" + path.replace(/^\/data\//, "");
       return env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), request));
     }
@@ -25,11 +25,6 @@ export default {
     };
     if (!CERTS[certId]) certId = "1";
     const cert = CERTS[certId];
-
-    // 第一页：证书 ID 对应的图；第二页：永远是 2.jpg（固定）
-    const pages = [certId, "2"];
-
-    let pagesHtml = pages.map(id => `<img class="cert-img" src="/data/${id}.jpg" />`).join("");
 
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -67,7 +62,10 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
       <div class="p">
         <span><span class="status-icon">&#10003;</span> ${cert.status}</span>
       </div>
-      <div class="register-box">${pagesHtml}</div>
+      <div class="register-box">
+        <img class="cert-img" src="/data/${certId}.jpg" />
+        <img class="cert-img" src="/data/back.jpg" />
+      </div>
     </div>
     <div class="register-footer">
       版权所有：中国民用航空局信息中心版权所有&copy;2021
