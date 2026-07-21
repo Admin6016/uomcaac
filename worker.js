@@ -5,11 +5,10 @@ export default {
 
     if (path === "/favicon.ico") return new Response("", { status: 204 });
 
-    // 静态资源: /data/:id.jpg -> ASSETS binding（目录是 ./data，路径要去掉 /data/ 前缀）
+    // 静态资源: /data/:id.jpg
     if (path.match(/^\/data\/\d+\.jpg$/) && env.ASSETS) {
-      const assetPath = "/" + path.replace(/^\/data\//, ""); // /1.jpg
-      const assetReq = new Request(new URL(assetPath, url.origin), request);
-      return env.ASSETS.fetch(assetReq);
+      const assetPath = "/" + path.replace(/^\/data\//, "");
+      return env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), request));
     }
 
     // 路由解析
@@ -22,15 +21,15 @@ export default {
     }
 
     const CERTS = {
-      "1": { status: "已启用", title: "运营合格证", pages: 2 },
+      "1": { status: "已启用", title: "运营合格证" },
     };
     if (!CERTS[certId]) certId = "1";
     const cert = CERTS[certId];
 
-    let pagesHtml = "";
-    for (let i = 1; i <= cert.pages; i++) {
-      pagesHtml += `<img class="cert-img" src="/data/${i}.jpg" />`;
-    }
+    // 第一页：证书 ID 对应的图；第二页：永远是 2.jpg（固定）
+    const pages = [certId, "2"];
+
+    let pagesHtml = pages.map(id => `<img class="cert-img" src="/data/${id}.jpg" />`).join("");
 
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
