@@ -5,13 +5,23 @@ export default {
 
     if (path === "/favicon.ico") return new Response("", { status: 204 });
 
-    // 静态资源: /data/xxx.jpg
+    // 静态资源: /data/xxx.jpg — 长缓存，图片内容变化时文件名会变
     if (path.match(/^\/data\/.+\.jpg$/) && env.ASSETS) {
       const assetPath = "/" + path.replace(/^\/data\//, "");
-      return env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), request));
+      const resp = await env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), request));
+      // 克隆响应并强制 no-cache，确保微信等内嵌浏览器每次拿到最新
+      return new Response(resp.body, {
+        status: resp.status,
+        headers: {
+          "Content-Type": resp.headers.get("Content-Type") || "image/jpeg",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      });
     }
 
-    // 路由解析：提取证书 ID
+    // 路由解析
     let certId = "1";
     const showMatch = path.match(/^\/uav-sczs-show\/(.+)$/);
     if (showMatch) {
@@ -20,19 +30,22 @@ export default {
       certId = path.match(/^\/(\d+)$/)[1];
     }
 
-    // 元数据（仅用于标题/状态，不影响图片路径）
     const CERTS = {
       "1": { status: "已启用", title: "运营合格证" },
     };
     const cert = CERTS[certId] || { status: "已启用", title: "运营合格证" };
 
-    // 第一张：/data/{certId}.jpg（按路径直接取，CERTS 白名单无关）
-    // 第二张：/data/back.jpg（固定背页）
+    // 强制刷新戳：用当前小时作为版本号，微信每次打开都是最新
+    const v = Math.floor(Date.now() / 3600000);
+
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title id="portal-title"></title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -56,7 +69,7 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
 <div id="app">
   <div class="register-page">
     <div class="register-header">
-      <img src="https://uom.caac.gov.cn/login/img/logo_indextop.9b55742d.png" alt="UOM"
+      <img src="https://uom.caac.gov.cn/login/img/logo_indextop.9b55742d.png?v=${v}" alt="UOM"
         onerror="this.style.display='none'" />
     </div>
     <div class="register-container">
@@ -65,8 +78,8 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
         <span><span class="status-icon">&#10003;</span> ${cert.status}</span>
       </div>
       <div class="register-box">
-        <img class="cert-img" src="/data/${certId}.jpg" />
-        <img class="cert-img" src="/data/back.jpg" />
+        <img class="cert-img" src="/data/${certId}.jpg?v=${v}" />
+        <img class="cert-img" src="/data/back.jpg?v=${v}" />
       </div>
     </div>
     <div class="register-footer">
@@ -78,7 +91,12 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#fff;colo
 </html>`;
 
     return new Response(html, {
-      headers: { "Content-Type": "text/html;charset=UTF-8" },
+      headers: {
+        "Content-Type": "text/html;charset=UTF-8",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
     });
   }
 };
